@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Countdown Timer</title>
+  <style>
+    #countdown {
+    color: white;
+    font-size: 5rem;
+    margin: 20px 0;
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+  }
+  .time-unit {
+    text-align: center;
+  }
+  .label {
+    font-size: 1rem;
+  }
+    body {
+      font-family: 'Arial', sans-serif;
+      text-align: center;
+      padding: 20px;
+      transition: background-color 0.5s ease;
+    }
+    h1 {
+      font-size: 3rem;
+    }
+    #countdown {
+      font-size: 5rem;
+      margin: 20px 0;
+    }
+    #info {
+      color:white;
+      font-size: 1.5rem;
+    }
+    .input-container {
+      margin: 20px 0;
+    }
+    input, button {
+      padding: 10px;
+      font-size: 1rem;
+    }
+    .hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <h1>Countdown Timer</h1>
+  <div class="input-container" id="form-container">
+    <!-- <label for="title">Countdown About: </label> -->
+    <input type="text" id="title" placeholder="Event name..." required>
+    <br><br>
+    <label for="datetime">Select Date & Time: </label>
+    <input type="datetime-local" id="datetime" required>
+    <br><br>
+    <button onclick="startCountdown()">Start Countdown</button>
+  </div>
+  
+  <div id="info" class="hidden"></div>
+  <div id="countdown" class="hidden">00:00:00:00</div>
+
+  <script>
+    function startCountdown() {
+      const title = document.getElementById('title').value;
+      const datetime = document.getElementById('datetime').value;
+      if (!title || !datetime) {
+        alert('Please enter all details.');
+        return;
+      }
+
+      const targetDate = new Date(datetime).getTime();
+      const expiryDate = targetDate + 3600 * 1000; // 1 hour after the countdown target time
+      document.cookie = `countdownData=${encodeURIComponent(JSON.stringify({ title, targetDate }))}; expires=${new Date(expiryDate).toUTCString()}; path=/`;
+
+      document.getElementById('form-container').classList.add('hidden');
+      displayCountdown(title, targetDate);
+    }
+
+    function displayCountdown(title, targetDate) {
+      const info = document.getElementById('info');
+      const countdown = document.getElementById('countdown');
+
+      info.innerHTML = `<strong>${title}</strong>`;
+      info.classList.remove('hidden');
+      countdown.classList.remove('hidden');
+
+      const interval = setInterval(() => {
+        const now = new Date().getTime();
+        const distance = targetDate - now;
+
+        if (distance <= 0) {
+          clearInterval(interval);
+          countdown.innerHTML = 'Countdown Complete!';
+          document.body.style.backgroundColor = '#000';
+          setTimeout(() => {
+            document.getElementById('form-container').classList.remove('hidden');
+            info.classList.add('hidden');
+            countdown.classList.add('hidden');
+          }, 5000); // Show form again after 5 seconds
+          return;
+        }
+
+        const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+        countdown.innerHTML = `
+  <div class="time-unit">
+    <div>${days}</div>
+    <div class="label">Days</div>
+  </div>
+  <div class="time-unit">
+    <div>${hours.toString().padStart(2, '0')}</div>
+    <div class="label">Hours</div>
+  </div>
+  <div class="time-unit">
+    <div>${minutes.toString().padStart(2, '0')}</div>
+    <div class="label">Minutes</div>
+  </div>
+  <div class="time-unit">
+    <div>${seconds.toString().padStart(2, '0')}</div>
+    <div class="label">Seconds</div>
+  </div>
+`;
+
+        
+        // Color change logic
+        if (distance > 24 * 60 * 60 * 1000) {
+          document.body.style.backgroundColor = 'green';
+        } else if (distance > 60 * 60 * 1000) {
+          document.body.style.backgroundColor = 'yellow';
+        } else {
+          document.body.style.backgroundColor = 'red';
+        }
+      }, 1000);
+    }
+
+    // Check if there is a saved countdown in cookies
+    window.onload = function() {
+      const cookie = document.cookie.split('; ').find(row => row.startsWith('countdownData='));
+      if (cookie) {
+        const countdownData = JSON.parse(decodeURIComponent(cookie.split('=')[1]));
+        document.getElementById('form-container').classList.add('hidden');
+        displayCountdown(countdownData.title, countdownData.targetDate);
+      }
+    };
+  </script>
+</body>
+</html>
